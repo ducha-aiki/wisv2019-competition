@@ -82,7 +82,7 @@ def crop_round_patches(circle_patches, cropsize=97):
 def rotate_circle_patches(cp, rot_angles):
     ropatches = np.ndarray(cp.shape, dtype=np.uint8)
     for i in range(len(cp)):
-        ropatches[i,0,:,:] = np.array(Image.fromarray(cp[i,0,:,:]).rotate(-rot_angles[i], resample=Image.BICUBIC))
+        ropatches[i,0,:,:] = np.array(Image.fromarray(cp[i,0,:,:]).rotate(-rot_angles[i], resample=Image.BILINEAR))
     return ropatches
 
 def resize_patches(rp, PS=32):
