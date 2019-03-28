@@ -48,7 +48,11 @@ def greedy_iterative_mutual_nns_slow(dmv1, do_mutual=False):
             dmv[y,:] = MAXVAL
     else:
         mutual_mask = idxs_in_2[idxs_in_1[:]] == idxs_r_in2.cuda()
-        min_dist_r2_sorted, min_dist_r2_idxs_sort = torch.sort(min_dist_r2.view(-1)-1000*mutual_mask.float(),0, False)
+        if do_mutual:
+            min_dist_r2_sorted, min_dist_r2_idxs_sort = torch.sort(min_dist_r2.view(-1)-1000*mutual_mask.float(),0, False)
+            #That is a hack for first having mutual neighbors, and then the rest
+        else: #This matches the matlab implementation, therefore is default
+            min_dist_r2_sorted, min_dist_r2_idxs_sort = torch.sort(min_dist_r2.view(-1).float(),0, False)
         for i in range(w):
             x = min_dist_r2_idxs_sort[i]
             col = dmv[:,x].clone()
