@@ -16,7 +16,8 @@ from HardNet import HardNet
 from PIL import Image
 import pandas as pd
 
-def greedy_iterative_nns_slow(dmv1):
+
+def greedy_iterative_mutual_nns_slow(dmv1, do_mutual=False):
     dmv = dmv1.detach().clone()
     MAXVAL = 999999999
     h,w = dmv.size()
@@ -28,8 +29,11 @@ def greedy_iterative_nns_slow(dmv1):
     idxs_r_in2 = torch.arange(w)
     if h < w:
         mutual_mask = idxs_in_1[idxs_in_2[:]] == idxs_c_in1.cuda()
-        min_dist_c2_sorted, min_dist_c2_idxs_sort = torch.sort(min_dist_c2.view(-1) - 1000*mutual_mask.float(),0, False)
-        #That is a hack for first having mutual neighbors, and then the rest
+        if do_mutual:
+            min_dist_c2_sorted, min_dist_c2_idxs_sort = torch.sort(min_dist_c2.view(-1) - 1000*mutual_mask.float(),0, False)
+            #That is a hack for first having mutual neighbors, and then the rest
+        else: #This matches the matlab implementation, therefore is default
+            min_dist_c2_sorted, min_dist_c2_idxs_sort = torch.sort(min_dist_c2.view(-1),0, False)
         for i in range(h):
             y = min_dist_c2_idxs_sort[i]
             row = dmv[y,:].clone()
