@@ -30,12 +30,14 @@ def greedy_iterative_snns_slow(dmv1, do_mutual=False):
     if h < w:
         mutual_mask = idxs_in_1[idxs_in_2[:]] == idxs_c_in1.cuda()
         for i in range(h):
+            min_dist_r2, idxs_in_1 = torch.min(dmv, 0)
+            min_dist_c2, idxs_in_2 = torch.min(dmv, 1)    
             if do_mutual:
-                min_dist_c2_sorted, min_dist_c2_idxs_sort = torch.sort(min_dist_c2.view(-1) - 1000*mutual_mask.float(),0, False)
+                min_dist_c2, min_dist_c2_idx = torch.min(min_dist_c2.view(-1) - 1000*mutual_mask.float(),0)
                 #That is a hack for first having mutual neighbors, and then the rest
             else: #This matches the matlab implementation, therefore is default
-                min_dist_c2_sorted, min_dist_c2_idxs_sort = torch.sort(min_dist_c2.view(-1),0, False)
-            y = min_dist_c2_idxs_sort[0]
+                min_dist_c2, min_dist_c2_idx = torch.min(min_dist_c2.view(-1),0)
+            y = min_dist_c2_idx.item()
             row = dmv[y,:].clone()
             val, x = torch.min(row.view(-1),0)
             col = dmv[:,x].clone()
@@ -49,12 +51,14 @@ def greedy_iterative_snns_slow(dmv1, do_mutual=False):
     else:
         mutual_mask = idxs_in_2[idxs_in_1[:]] == idxs_r_in2.cuda()
         for i in range(w):
+            min_dist_r2, idxs_in_1 = torch.min(dmv, 0)
+            min_dist_c2, idxs_in_2 = torch.min(dmv, 1)    
             if do_mutual:
-                min_dist_r2_sorted, min_dist_r2_idxs_sort = torch.sort(min_dist_r2.view(-1)-1000*mutual_mask.float(),0, False)
+                min_dist_r2, min_dist_r2_idx = torch.min(min_dist_r2.view(-1)-1000*mutual_mask.float(),0)
                 #That is a hack for first having mutual neighbors, and then the rest
             else: #This matches the matlab implementation, therefore is default
-                min_dist_r2_sorted, min_dist_r2_idxs_sort = torch.sort(min_dist_r2.view(-1).float(),0, False)
-            x = min_dist_r2_idxs_sort[0]
+                min_dist_r2, min_dist_r2_idx = torch.min(min_dist_r2.view(-1).float(),0)
+            x = min_dist_r2_idx.item()
             col = dmv[:,x].clone()
             val, y = torch.min(col.view(-1),0)
             row = dmv[y,:].clone()
