@@ -3,7 +3,7 @@ import torch
 import os 
 from time import time
 
-from wiswUtils import (greedy_iterative_nns_slow,
+from wiswUtils import (greedy_iterative_snns_slow,
                        match_fname,
                        distance_matrix_vector)
 
@@ -168,13 +168,13 @@ if __name__ == '__main__':
         if not os.path.isdir(MATCHES_DIR):
             os.makedirs(MATCHES_DIR)
         needs_matching = not os.path.isfile(mfn)
-        if needs_matching:
+        if True:#needs_matching:
             t = time()
             d1 = torch.from_numpy(np.nan_to_num(np.loadtxt(fn1).astype(np.float32))).cuda()
             d2 = torch.from_numpy(np.nan_to_num(np.loadtxt(fn2).astype(np.float32))).cuda()
             with torch.no_grad():
                 dmv = distance_matrix_vector(d1, d2)
-                out = greedy_iterative_nns_slow(dmv)
+                out = greedy_iterative_snns_slow(dmv)
                 vals, idxs = torch.sort(out[:,2])
                 el = time() - t
                 print ( pair, el, " sec")
