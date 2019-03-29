@@ -175,10 +175,9 @@ if __name__ == '__main__':
             with torch.no_grad():
                 dmv = distance_matrix_vector(d1, d2)
                 out = greedy_iterative_snns_slow(dmv)
-                vals, idxs = torch.sort(out[:,2])
                 el = time() - t
                 print ( pair, el, " sec")
-                np.savetxt(mfn, out[idxs].detach().cpu().numpy(), delimiter=' ', fmt='%5.3f')
+                np.savetxt(mfn, out, delimiter=',', fmt='%5.3f')
         else:
             print (pair, 'exist, skipping')
     print ('Matching done!')
