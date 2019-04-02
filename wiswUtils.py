@@ -16,9 +16,9 @@ from HardNet import HardNet
 from PIL import Image
 import pandas as pd
 
-def greedy_iterative_nns_slow(dmv1):
-    dmv = dmv1.detach().clone()
-    MAXVAL = 999999999
+def greedy_iterative_snns_slow(dmv1, do_mutual=False):
+    dmv = dmv1.detach().clone().cpu()
+    MAXVAL = dmv1.max() +100
     h,w = dmv.size()
     min_size = min(h,w)
     out = torch.zeros(min_size,3)
@@ -26,39 +26,61 @@ def greedy_iterative_nns_slow(dmv1):
     min_dist_c2, idxs_in_2 = torch.min(dmv, 1)    
     idxs_c_in1 = torch.arange(h)
     idxs_r_in2 = torch.arange(w)
+    #vals1 = []
     if h < w:
-        mutual_mask = idxs_in_1[idxs_in_2[:]] == idxs_c_in1.cuda()
-        min_dist_c2_sorted, min_dist_c2_idxs_sort = torch.sort(min_dist_c2.view(-1) - 1000*mutual_mask.float(),0, False)
-        #That is a hack for first having mutual neighbors, and then the rest
+        mutual_mask = idxs_in_1[idxs_in_2[:]] == idxs_c_in1#.cuda()
         for i in range(h):
-            y = min_dist_c2_idxs_sort[i]
+            #dmv = dmv.double()
+            #min_dist_r2, idxs_in_1 = torch.min(dmv, 0)
+            min_dist_c2, idxs_in_2 = torch.min(dmv, 1)
+            if do_mutual:
+                min_dist_c2 = min_dist_c2.view(-1) - 1000*mutual_mask.float()
+                #That is a hack for first having mutual neighbors, and then the rest
+            val, min_dist_c2_idx = torch.min(min_dist_c2.view(-1),0)
+            assert val == dmv.min()
+            y = min_dist_c2_idx.item()
             row = dmv[y,:].clone()
-            val, x = torch.min(row.view(-1),0)
+            val1, x = torch.min(row.view(-1),0)
             col = dmv[:,x].clone()
-            col[col<=val] = MAXVAL
             dmv[y,x] = MAXVAL
+            col[y]=MAXVAL
+            row[x]=MAXVAL
             out[i,0] = y#idx in img1
             out[i,1] = x#idx in img2
-            out[i,2] = -(dmv[y,:].min()+ col.min())/ (2.0*val)#iSSN ratio
+            out[i,2] = -(row.min()+ col.min())/ (2.0*val.float())#iSSN ratio
             dmv[:,x] = MAXVAL
             dmv[y,:] = MAXVAL
     else:
-        mutual_mask = idxs_in_2[idxs_in_1[:]] == idxs_r_in2.cuda()
-        min_dist_r2_sorted, min_dist_r2_idxs_sort = torch.sort(min_dist_r2.view(-1)-1000*mutual_mask.float(),0, False)
+        mutual_mask = idxs_in_2[idxs_in_1[:]] == idxs_r_in2#.cuda()
+        #dmv = dmv.double()
         for i in range(w):
-            x = min_dist_r2_idxs_sort[i]
+            min_dist_r2, idxs_in_1 = torch.min(dmv, 0)
+            #min_dist_c2, idxs_in_2 = torch.min(dmv, 1)    
+            if do_mutual:
+                min_dist_r2 = min_dist_r2.view(-1)-1000*mutual_mask.float()
+                #That is a hack for first having mutual neighbors, and then the rest
+            #print (min_dist_r2.view(-1).topk(2,0, False)[0])
+            val, min_dist_r2_idx = torch.min(min_dist_r2.view(-1).float(),0)
+            #vals1.append(val.item())
+            x = min_dist_r2_idx.item()
             col = dmv[:,x].clone()
-            val, y = torch.min(col.view(-1),0)
+            val1, y = torch.min(col.view(-1),0)
             row = dmv[y,:].clone()
-            row[row<=val] = MAXVAL
+            #col[col<val.float()] = MAXVAL
+            #row[row<val.float()] = MAXVAL
+            col[y]=MAXVAL
+            row[x]=MAXVAL
             dmv[y,x] = MAXVAL
             out[i,0] = y#idx in img1
             out[i,1] = x#idx in img2
-            out[i,2] = -(row.min()+ dmv[:,x].min())/ (2.0*val)#iSSN ratio
+            out[i,2] = -(row.min()+ col.min())/(2.0*val)#iSSN ratio
+            #print (row.min().item(), col.min().item())
             dmv[:,x] = MAXVAL
             dmv[y,:] = MAXVAL
-    out[i,2] = -1    
-    return out.float().cpu()
+    out[i,2] = -1   
+    vals, idxs = torch.sort(out[:,2])
+    out2 = out[idxs].detach().cpu()
+    return out2.float().cpu()
 
 def read_circle_patches(fname, rot_ang = 0):
     #patches = np.loadtxt(fname, delimiter=',') #24 sec to read
@@ -82,7 +104,7 @@ def crop_round_patches(circle_patches, cropsize=97):
 def rotate_circle_patches(cp, rot_angles):
     ropatches = np.ndarray(cp.shape, dtype=np.uint8)
     for i in range(len(cp)):
-        ropatches[i,0,:,:] = np.array(Image.fromarray(cp[i,0,:,:]).rotate(-rot_angles[i], resample=Image.BICUBIC))
+        ropatches[i,0,:,:] = np.array(Image.fromarray(cp[i,0,:,:]).rotate(-rot_angles[i], resample=Image.BILINEAR))
     return ropatches
 
 def resize_patches(rp, PS=32):
