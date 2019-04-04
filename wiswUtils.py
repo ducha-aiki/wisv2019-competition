@@ -78,6 +78,8 @@ def greedy_iterative_snns_slow(dmv1, do_mutual=False):
             dmv[:,x] = MAXVAL
             dmv[y,:] = MAXVAL
     out[i,2] = -1   
+    out[i,0] += 1
+    out[i,1] += 1
     vals, idxs = torch.sort(out[:,2])
     out2 = out[idxs].detach().cpu()
     return out2.float().cpu()
