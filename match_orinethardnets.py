@@ -168,7 +168,7 @@ if __name__ == '__main__':
         if not os.path.isdir(MATCHES_DIR):
             os.makedirs(MATCHES_DIR)
         needs_matching = not os.path.isfile(mfn)
-        if True:#needs_matching:
+        if needs_matching:
             t = time()
             d1 = torch.from_numpy(np.nan_to_num(np.loadtxt(fn1).astype(np.float32))).cuda()
             d2 = torch.from_numpy(np.nan_to_num(np.loadtxt(fn2).astype(np.float32))).cuda()

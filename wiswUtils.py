@@ -17,7 +17,7 @@ from PIL import Image
 import pandas as pd
 
 def greedy_iterative_snns_slow(dmv1, do_mutual=False):
-    dmv = dmv1.detach().clone().cpu()
+    dmv = dmv1.detach().clone().cuda()
     MAXVAL = dmv1.max() +100
     h,w = dmv.size()
     min_size = min(h,w)
@@ -28,7 +28,7 @@ def greedy_iterative_snns_slow(dmv1, do_mutual=False):
     idxs_r_in2 = torch.arange(w)
     #vals1 = []
     if h < w:
-        mutual_mask = idxs_in_1[idxs_in_2[:]] == idxs_c_in1#.cuda()
+        mutual_mask = idxs_in_1[idxs_in_2[:]] == idxs_c_in1.cuda()
         for i in range(h):
             #dmv = dmv.double()
             #min_dist_r2, idxs_in_1 = torch.min(dmv, 0)
@@ -51,7 +51,7 @@ def greedy_iterative_snns_slow(dmv1, do_mutual=False):
             dmv[:,x] = MAXVAL
             dmv[y,:] = MAXVAL
     else:
-        mutual_mask = idxs_in_2[idxs_in_1[:]] == idxs_r_in2#.cuda()
+        mutual_mask = idxs_in_2[idxs_in_1[:]] == idxs_r_in2.cuda()
         #dmv = dmv.double()
         for i in range(w):
             min_dist_r2, idxs_in_1 = torch.min(dmv, 0)

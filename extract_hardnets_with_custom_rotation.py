@@ -135,9 +135,9 @@ if __name__ == '__main__':
     for idx, fn in enumerate(patches_fnames):
         t=time()
         out_fname = os.path.join(OUT_DIR, fn.split('/')[-1].replace('big_patches', 'orinethardnet'))
-        #if os.path.isfile(out_fname):
-        #    print (out_fname, 'exists, skipping')
-        #    continue
+        if os.path.isfile(out_fname):
+            print (out_fname, 'exists, skipping')
+            continue
         desc = describe_with_custom_ori(fn, model, ori_model)
         np.savetxt(out_fname, desc, delimiter=' ', fmt='%d')
         print (fn, 'in',  time()-t, 'sec', idx, 'out of', len(patches_fnames))

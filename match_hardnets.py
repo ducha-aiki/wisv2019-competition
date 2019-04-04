@@ -174,7 +174,7 @@ if __name__ == '__main__':
             d2 = torch.from_numpy(np.nan_to_num(np.loadtxt(fn2).astype(np.float32))).cuda()
             with torch.no_grad():
                 dmv = distance_matrix_vector(d1, d2)
-                out = greedy_iterative_snns_slow(dmv)
+                out = greedy_iterative_snns_slow(dmv.cuda())
                 el = time() - t
                 print ( pair, el, " sec")
                 np.savetxt(mfn, out, delimiter=',', fmt='%5.3f')
